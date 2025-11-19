@@ -1,0 +1,7 @@
+#!/usr/bin/make -f
+
+export QT_QPA_PLATFORM=offscreen
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+%:
+	dh $@ --sourcedirectory=src --buildsystem=cmake

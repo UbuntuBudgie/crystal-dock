@@ -1,0 +1,27 @@
+Source: crystal-dock
+Section: misc
+Priority: optional
+Maintainer: David Mohammed <fossfreedom@ubuntu.com>
+Homepage: https://github.com/dangvd/crystal-dock
+Build-Depends:
+ debhelper-compat (= 13),
+ cmake,
+ qt6-base-private-dev,
+ libwayland-dev,
+ liblayershellqtinterface-dev
+Standards-Version: 4.7.2
+Vcs-Browser: https://github.com/ubuntubudgie/crystal-dock/tree/debian
+Vcs-Git: https://github.com/ubuntubudgie/crystal-dock.git -b debian
+
+Package: crystal-dock
+Architecture: any
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends}
+Description: Wayland dock with cross-desktop support
+ Crystal Dock is a cool dock (desktop panel) for Linux desktop, with the focus
+ on attractive user interface, simplicity and cross-desktop support.
+ .
+ The current version supports Hyprland, KDE Plasma 6, Labwc, LXQt, Niri and
+ Wayfire on Wayland. Other desktop environments and compositors will be
+ considered when they run on Wayland and provide sufficient APIs.
