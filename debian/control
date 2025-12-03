@@ -10,8 +10,8 @@ Build-Depends:
  libwayland-dev,
  liblayershellqtinterface-dev
 Standards-Version: 4.7.2
-Vcs-Browser: https://github.com/ubuntubudgie/crystal-dock/tree/debian
-Vcs-Git: https://github.com/ubuntubudgie/crystal-dock.git -b debian
+Vcs-Browser: https://github.com/ubuntubudgie/crystal-dock/tree/debian/latest
+Vcs-Git: https://github.com/ubuntubudgie/crystal-dock.git -b debian/latest
 
 Package: crystal-dock
 Architecture: any
