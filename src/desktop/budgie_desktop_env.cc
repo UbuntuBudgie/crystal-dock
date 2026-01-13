@@ -16,13 +16,13 @@
  * along with Crystal Dock.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "wayfire_desktop_env.h"
+#include "budgie_desktop_env.h"
 
 #include <model/multi_dock_model.h>
 
 namespace crystaldock {
 
-std::vector<Category> WayfireDesktopEnv::getApplicationMenuSystemCategories() const {
+std::vector<Category> BudgieDesktopEnv::getApplicationMenuSystemCategories() const {
   static const std::vector<Category> kSystemCategories = {
     {"Session", "Session", "system-log-out",
       {
@@ -30,14 +30,15 @@ std::vector<Category> WayfireDesktopEnv::getApplicationMenuSystemCategories() co
           "Lock Screen",
           "",
           "system-lock-screen",
-          "swaylock",
+          "dbus-send --type=method_call --dest=org.buddiesofbudgie.BudgieScreenlock"
+              " /org/buddiesofbudgie/Screenlock org.buddiesofbudgie.BudgieScreenlock.Lock",
           ""
         },
         {kLogOutId,
           "Log Out",
           "",
           "system-log-out",
-          "wlogout",
+          "budgie-session-quit",
           ""
         },
       },
@@ -47,9 +48,9 @@ std::vector<Category> WayfireDesktopEnv::getApplicationMenuSystemCategories() co
   return kSystemCategories;
 }
 
-std::vector<QString> WayfireDesktopEnv::getDefaultLaunchers() const {
-  return { kShowDesktopId, defaultWebBrowser(), "alacritty",
-           kSeparatorId, kLockScreenId, kLogOutId, kSeparatorId };
+std::vector<QString> BudgieDesktopEnv::getDefaultLaunchers() const {
+  return { kShowDesktopId, defaultWebBrowser(), kSeparatorId,
+           "budgie-desktop-settings", kLockScreenId, kLogOutId, kSeparatorId };
 }
 
 }  // namespace crystaldock

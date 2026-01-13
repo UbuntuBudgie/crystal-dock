@@ -48,8 +48,10 @@
 
 #include "add_panel_dialog.h"
 #include "application_menu.h"
+#include "battery_indicator.h"
 #include "clock.h"
 #include "desktop_selector.h"
+#include "keyboard_layout.h"
 #include "multi_dock_view.h"
 #include "program.h"
 #include "separator.h"
@@ -65,17 +67,13 @@ namespace ranges = std::ranges;
 
 namespace crystaldock {
 
-/*static*/ constexpr char DockPanel::kVersion[] = "2.15";
+/*static*/ constexpr char DockPanel::kVersion[] = "2.16";
 
 DockPanel::DockPanel(MultiDockView* parent, MultiDockModel* model, int dockId)
     : QWidget(),
       parent_(parent),
       model_(model),
       dockId_(dockId),
-      visibility_(PanelVisibility::AlwaysVisible),
-      showPager_(false),
-      showClock_(false),
-      showTrash_(false),
       aboutDialog_(QMessageBox::Information, "About Crystal Dock",
                    QString("<h3>Crystal Dock ") + kVersion + "</h3>"
                    + "<p>Copyright (C) 2025 Viet Dang (dangvd@gmail.com)"
@@ -84,6 +82,7 @@ DockPanel::DockPanel(MultiDockView* parent, MultiDockModel* model, int dockId)
                    QMessageBox::Ok, this, Qt::Tool),
       addPanelDialog_(this, model, dockId),
       appearanceSettingsDialog_(this, model),
+      editKeyboardLayoutsDialog_(this, model),
       editLaunchersDialog_(this, model, dockId),
       applicationMenuSettingsDialog_(this, model),
       wallpaperSettingsDialog_(this, model),
@@ -125,6 +124,10 @@ DockPanel::DockPanel(MultiDockView* parent, MultiDockModel* model, int dockId)
           this, SLOT(onWindowLeftCurrentDesktop(void*)));
   connect(WindowSystem::self(), SIGNAL(windowLeftCurrentActivity(void*)),
           this, SLOT(onWindowLeftCurrentActivity(void*)));
+  connect(WindowSystem::self(), SIGNAL(windowEnteredOutput(const WindowInfo*, const wl_output*)),
+          this, SLOT(onWindowEnteredOutput(const WindowInfo*, const wl_output*)));
+  connect(WindowSystem::self(), SIGNAL(windowLeftOutput(const WindowInfo*, const wl_output*)),
+          this, SLOT(onWindowLeftOutput(const WindowInfo*, const wl_output*)));
   connect(WindowSystem::self(), SIGNAL(windowGeometryChanged(const WindowInfo*)),
           this, SLOT(onWindowGeometryChanged(const WindowInfo*)));
   connect(WindowSystem::self(), SIGNAL(currentActivityChanged(std::string_view)),
@@ -140,7 +143,6 @@ void DockPanel::reload() {
   items_.clear();
   initUi();
   setMask();
-  update();
 }
 
 void DockPanel::refresh() {
@@ -242,50 +244,41 @@ void DockPanel::about() {
 void DockPanel::showAppearanceSettingsDialog() {
   appearanceSettingsDialog_.reload();
   appearanceSettingsDialog_.show();
-  appearanceSettingsDialog_.raise();
-  appearanceSettingsDialog_.activateWindow();
+}
+
+void DockPanel::showEditKeyboardLayoutsDialog() {
+  editKeyboardLayoutsDialog_.refreshData();
+  editKeyboardLayoutsDialog_.show();
 }
 
 void DockPanel::showEditLaunchersDialog() {
   editLaunchersDialog_.reload();
   editLaunchersDialog_.show();
-  editLaunchersDialog_.raise();
-  editLaunchersDialog_.activateWindow();
 }
 
 void DockPanel::showApplicationMenuSettingsDialog() {
   applicationMenuSettingsDialog_.reload();
   applicationMenuSettingsDialog_.show();
-  applicationMenuSettingsDialog_.raise();
-  applicationMenuSettingsDialog_.activateWindow();
 }
 
 void DockPanel::showWallpaperSettingsDialog(int desktop) {
   wallpaperSettingsDialog_.setFor(desktop, screen_);
   wallpaperSettingsDialog_.show();
-  wallpaperSettingsDialog_.raise();
-  wallpaperSettingsDialog_.activateWindow();
 }
 
 void DockPanel::showTaskManagerSettingsDialog() {
   taskManagerSettingsDialog_.reload();
   taskManagerSettingsDialog_.show();
-  taskManagerSettingsDialog_.raise();
-  taskManagerSettingsDialog_.activateWindow();
 }
 
 void DockPanel::addDock() {
   addPanelDialog_.setMode(AddPanelDialog::Mode::Add);
   addPanelDialog_.show();
-  addPanelDialog_.raise();
-  addPanelDialog_.activateWindow();
 }
 
 void DockPanel::cloneDock() {
   addPanelDialog_.setMode(AddPanelDialog::Mode::Clone);
   addPanelDialog_.show();
-  addPanelDialog_.raise();
-  addPanelDialog_.activateWindow();
 }
 
 void DockPanel::removeDock() {
@@ -408,6 +401,44 @@ void DockPanel::onActiveWindowChanged() {
   update();
 }
 
+void DockPanel::onWindowEnteredOutput(const WindowInfo* task, const wl_output* output) {
+  intellihideHideUnhide();
+
+  if (!showTaskManager()) {
+    return;
+  }
+
+  if (!model_->currentScreenTasksOnly()) {
+    return;
+  }
+
+  if (screenOutput_ != output) {
+    return;
+  }
+
+  if (addTask(task)) {
+    resizeTaskManager();
+  }
+}
+
+void DockPanel::onWindowLeftOutput(const WindowInfo* task, const wl_output* output) {
+  intellihideHideUnhide();
+
+  if (!showTaskManager()) {
+    return;
+  }
+
+  if (!model_->currentScreenTasksOnly()) {
+    return;
+  }
+
+  if (screenOutput_ != output) {
+    return;
+  }
+
+  removeTask(task->window);
+}
+
 int DockPanel::taskIndicatorPos() {
   const auto margin = isGlass2D() || (is3D() && !isBottom())
       ? kIndicatorMarginGlass2D
@@ -495,13 +526,14 @@ void DockPanel::setShowingPopup(bool showingPopup) {
     int y2 = 0;
     int w2 = 0;
     int h2 = 0;
+    int itemCount = static_cast<int>(items_.size());
     switch (position_) {
     case PanelPosition::Top:
       x = itemSpacing_;
       w = maxWidth_ - 2 * x;
       y = itemSpacing_ + (isFloating() ? floatingMargin_ : 0);
       h = minSize_;
-      if (activeItem_ >= 0 && activeItem_ < items_.size()) {
+      if (activeItem_ >= 0 && activeItem_ < itemCount) {
         x2 = items_[activeItem_]->left_;
         w2 = items_[activeItem_]->getMaxWidth();
         y2 = y;
@@ -514,7 +546,7 @@ void DockPanel::setShowingPopup(bool showingPopup) {
       y = maxHeight_ - itemSpacing_ - (isFloating() ? floatingMargin_ : 0)
           - (is3D() && isBottom() ? k3DPanelThickness : 0) - minSize_;
       h = minSize_;
-      if (activeItem_ >= 0 && activeItem_ < items_.size()) {
+      if (activeItem_ >= 0 && activeItem_ < itemCount) {
         x2 = items_[activeItem_]->left_;
         w2 = items_[activeItem_]->getMaxWidth();
         y2 = y + minSize_ - maxSize_;
@@ -526,7 +558,7 @@ void DockPanel::setShowingPopup(bool showingPopup) {
       h = maxHeight_ - 2 * y;
       x = itemSpacing_ + (isFloating() ? floatingMargin_ : 0);
       w = minSize_;
-      if (activeItem_ >= 0 && activeItem_ < items_.size()) {
+      if (activeItem_ >= 0 && activeItem_ < itemCount) {
         y2 = items_[activeItem_]->top_;
         h2 = items_[activeItem_]->getMaxHeight();
         x2 = y;
@@ -538,7 +570,7 @@ void DockPanel::setShowingPopup(bool showingPopup) {
       h = maxHeight_ - 2 * y;
       x = maxWidth_ - itemSpacing_ - (isFloating() ? floatingMargin_ : 0) - minSize_;
       w = minSize_;
-      if (activeItem_ >= 0 && activeItem_ < items_.size()) {
+      if (activeItem_ >= 0 && activeItem_ < itemCount) {
         y2 = items_[activeItem_]->top_;
         h2 = items_[activeItem_]->getMaxHeight();
         x2 = x + minSize_ - maxSize_;
@@ -610,7 +642,7 @@ void DockPanel::drawGlass3D(QPainter& painter) {
     int y = height() - itemSpacing_ - k3DPanelThickness;
     if (isFloating()) { y -= floatingMargin_; }
     QImage toMirrorImage = mainImage.copy(0, y - itemSpacing_ + 2, width(), itemSpacing_ - 2);
-    QImage mirrorImage = toMirrorImage.mirrored();
+    QImage mirrorImage = toMirrorImage.flipped(Qt::Vertical);
     painter.setOpacity(0.3);
     painter.drawImage(0, y, mirrorImage);
     painter.setOpacity(1.0);
@@ -853,11 +885,7 @@ void DockPanel::wheelEvent(QWheelEvent* e) {
   }
 
   if (activeItem_ >= 0 && activeItem_ < static_cast<int>(items_.size())) {
-    // Check if the active item is a VolumeControl
-    VolumeControl* volumeControl = dynamic_cast<VolumeControl*>(items_[activeItem_].get());
-    if (volumeControl) {
-      volumeControl->wheelEvent(e);
-    }
+    items_[activeItem_]->wheelEvent(e);
   }
 }
 
@@ -915,6 +943,8 @@ void DockPanel::initUi() {
   initTrash();
   initWifiManager();
   initVolumeControl();
+  initBatteryIndicator();
+  initKeyboardLayout();
   initVersionChecker();
   initClock();
   initLayoutVars();
@@ -954,12 +984,18 @@ void DockPanel::createMenu() {
   trashAction_ = extraComponents->addAction(QString("Trash"), this,
       SLOT(toggleTrash()));
   trashAction_->setCheckable(true);
-  volumeControlAction_ = extraComponents->addAction(QString("Volume Control"), this,
-                                                    SLOT(toggleVolumeControl()));
-  volumeControlAction_->setCheckable(true);
   wifiManagerAction_ = extraComponents->addAction(QString("Wi-Fi Manager"), this,
                                                   SLOT(toggleWifiManager()));
   wifiManagerAction_->setCheckable(true);
+  volumeControlAction_ = extraComponents->addAction(QString("Volume Control"), this,
+                                                    SLOT(toggleVolumeControl()));
+  volumeControlAction_->setCheckable(true);
+  batteryIndicatorAction_ = extraComponents->addAction(QString("Battery Indicator"), this,
+                                                       SLOT(toggleBatteryIndicator()));
+  batteryIndicatorAction_->setCheckable(true);
+  keyboardLayoutAction_ = extraComponents->addAction(QString("Keyboard Layout"), this,
+                                                     SLOT(toggleKeyboardLayout()));
+  keyboardLayoutAction_->setCheckable(true);
   versionCheckerAction_ = extraComponents->addAction(QString("Version Checker"), this,
                                                      SLOT(toggleVersionChecker()));
   versionCheckerAction_->setCheckable(true);
@@ -1123,20 +1159,26 @@ void DockPanel::loadDockConfig() {
 
   taskManagerAction_->setChecked(model_->showTaskManager(dockId_));
 
-  showClock_ = model_->showClock(dockId_);
-  clockAction_->setChecked(showClock_);
-
   showTrash_ = model_->showTrash(dockId_);
   trashAction_->setChecked(showTrash_);
 
-  showVersionChecker_ = model_->showVersionChecker(dockId_);
-  versionCheckerAction_->setChecked(showVersionChecker_);
+  showWifiManager_ = model_->showWifiManager(dockId_);
+  wifiManagerAction_->setChecked(showWifiManager_);
 
   showVolumeControl_ = model_->showVolumeControl(dockId_);
   volumeControlAction_->setChecked(showVolumeControl_);
 
-  showWifiManager_ = model_->showWifiManager(dockId_);
-  wifiManagerAction_->setChecked(showWifiManager_);
+  showBatteryIndicator_ = model_->showBatteryIndicator(dockId_);
+  batteryIndicatorAction_->setChecked(showBatteryIndicator_);
+
+  showKeyboardLayout_ = model_->showKeyboardLayout(dockId_);
+  keyboardLayoutAction_->setChecked(showKeyboardLayout_);
+
+  showVersionChecker_ = model_->showVersionChecker(dockId_);
+  versionCheckerAction_->setChecked(showVersionChecker_);
+
+  showClock_ = model_->showClock(dockId_);
+  clockAction_->setChecked(showClock_);
 }
 
 void DockPanel::saveDockConfig() {
@@ -1146,11 +1188,13 @@ void DockPanel::saveDockConfig() {
   model_->setShowApplicationMenu(dockId_, showApplicationMenu_);
   model_->setShowPager(dockId_, showPager_);
   model_->setShowTaskManager(dockId_, taskManagerAction_->isChecked());
-  model_->setShowClock(dockId_, showClock_);
   model_->setShowTrash(dockId_, showTrash_);
-  model_->setShowVersionChecker(dockId_, showVersionChecker_);
-  model_->setShowVolumeControl(dockId_, showVolumeControl_);
   model_->setShowWifiManager(dockId_, showWifiManager_);
+  model_->setShowVolumeControl(dockId_, showVolumeControl_);
+  model_->setShowBatteryIndicator(dockId_, showBatteryIndicator_);
+  model_->setShowKeyboardLayout(dockId_, showKeyboardLayout_);
+  model_->setShowVersionChecker(dockId_, showVersionChecker_);
+  model_->setShowClock(dockId_, showClock_);
   model_->saveDockConfig(dockId_);
 }
 
@@ -1220,6 +1264,8 @@ void DockPanel::reloadTasks() {
   initTrash();
   initWifiManager();
   initVolumeControl();
+  initBatteryIndicator();
+  initKeyboardLayout();
   initVersionChecker();
   initClock();
   resizeTaskManager();
@@ -1316,10 +1362,15 @@ bool DockPanel::isValidTask(const WindowInfo* task) {
     return false;
   }
 
-  QRect taskGeometry(task->x, task->y, task->width, task->height);
-  if (model_->currentScreenTasksOnly() && taskGeometry.isValid()
-      && !screenGeometry_.intersects(taskGeometry)) {
-    return false;
+  if (model_->currentScreenTasksOnly()) {
+    if (!task->outputs.empty() && !task->outputs.contains(screenOutput_)) {
+      return false;
+    }
+
+    QRect taskGeometry(task->x, task->y, task->width, task->height);
+    if (taskGeometry.isValid() && !screenGeometry_.intersects(taskGeometry)) {
+      return false;
+    }
   }
 
   if (WindowSystem::hasActivityManager() && !WindowSystem::currentActivity().empty()
@@ -1362,13 +1413,6 @@ bool DockPanel::hasTask(void* window) {
   return false;
 }
 
-void DockPanel::initClock() {
-  if (showClock_) {
-    items_.push_back(std::make_unique<Clock>(
-        this, model_, orientation_, minSize_, maxSize_));
-  }
-}
-
 void DockPanel::initTrash() {
   if (showTrash_) {
     items_.push_back(std::make_unique<Trash>(
@@ -1376,9 +1420,9 @@ void DockPanel::initTrash() {
   }
 }
 
-void DockPanel::initVersionChecker() {
-  if (showVersionChecker_) {
-    items_.push_back(std::make_unique<VersionChecker>(
+void DockPanel::initWifiManager() {
+  if (showWifiManager_) {
+    items_.push_back(std::make_unique<WifiManager>(
         this, model_, orientation_, minSize_, maxSize_));
   }
 }
@@ -1390,9 +1434,30 @@ void DockPanel::initVolumeControl() {
   }
 }
 
-void DockPanel::initWifiManager() {
-  if (showWifiManager_) {
-    items_.push_back(std::make_unique<WifiManager>(
+void DockPanel::initBatteryIndicator() {
+  if (showBatteryIndicator_) {
+    items_.push_back(std::make_unique<BatteryIndicator>(
+        this, model_, orientation_, minSize_, maxSize_));
+  }
+}
+
+void DockPanel::initKeyboardLayout() {
+  if (showKeyboardLayout_) {
+    items_.push_back(std::make_unique<KeyboardLayout>(
+        this, model_, orientation_, minSize_, maxSize_));
+  }
+}
+
+void DockPanel::initVersionChecker() {
+  if (showVersionChecker_) {
+    items_.push_back(std::make_unique<VersionChecker>(
+        this, model_, orientation_, minSize_, maxSize_));
+  }
+}
+
+void DockPanel::initClock() {
+  if (showClock_) {
+    items_.push_back(std::make_unique<Clock>(
         this, model_, orientation_, minSize_, maxSize_));
   }
 }
@@ -1761,7 +1826,6 @@ void DockPanel::resizeTaskManager() {
   }
 
   setMask();
-  update();
 }
 
 void DockPanel::setStrut(int width) {
@@ -1800,6 +1864,7 @@ void DockPanel::setMask() {
   } else {
     QWidget::setMask(QRegion(0, 0, maxWidth_, maxHeight_));
   }
+  repaint();
 }
 
 void DockPanel::updatePosition(PanelPosition position) {

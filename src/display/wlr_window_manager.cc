@@ -56,6 +56,10 @@ bool WlrWindowManager::showingDesktop_;
       WindowSystem::self(), &WindowSystem::windowStateChanged);
   connect(WlrWindowManager::self(), &WlrWindowManager::windowTitleChanged,
       WindowSystem::self(), &WindowSystem::windowTitleChanged);
+  connect(WlrWindowManager::self(), &WlrWindowManager::windowEnteredOutput,
+      WindowSystem::self(), &WindowSystem::windowEnteredOutput);
+  connect(WlrWindowManager::self(), &WlrWindowManager::windowLeftOutput,
+      WindowSystem::self(), &WindowSystem::windowLeftOutput);
 }
 
 /* static */ void WlrWindowManager::bindWindowManagerFunctions(
@@ -228,6 +232,7 @@ bool WlrWindowManager::showingDesktop_;
   }
 
   windows_[window]->outputs.insert(output);
+  emit self()->windowEnteredOutput(windows_[window].get(), output);
 }
 
 /* static */ void WlrWindowManager::output_leave(
@@ -239,6 +244,7 @@ bool WlrWindowManager::showingDesktop_;
   }
 
   windows_[window]->outputs.erase(output);
+  emit self()->windowLeftOutput(windows_[window].get(), output);
 }
 
 /* static */ void WlrWindowManager::state(
@@ -252,9 +258,10 @@ bool WlrWindowManager::showingDesktop_;
   windows_[window]->minimized = false;
   windows_[window]->maximized = false;
   windows_[window]->fullscreen = false;
-  void *state_entry;
-  wl_array_for_each(state_entry, state) {
-    auto* entry = static_cast<uint32_t*>(state_entry);
+  for (uint32_t* entry = static_cast<uint32_t*>(state->data);
+       state->size != 0 && reinterpret_cast<const char*>(entry)
+           < static_cast<const char*>(state->data) + state->size;
+       ++entry) {
     if (*entry == ZWLR_FOREIGN_TOPLEVEL_HANDLE_V1_STATE_MAXIMIZED) {
       if (!windows_[window]->minimized) {
         windows_[window]->maximized = true;

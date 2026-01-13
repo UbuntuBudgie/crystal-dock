@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>540</width>
-    <height>650</height>
+    <height>770</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>70</x>
-     <y>590</y>
+     <y>710</y>
      <width>400</width>
      <height>32</height>
     </rect>
@@ -35,10 +35,10 @@
   <widget class="QLabel" name="positionLabel">
    <property name="geometry">
     <rect>
-     <x>90</x>
-     <y>480</y>
-     <width>210</width>
-     <height>23</height>
+     <x>60</x>
+     <y>560</y>
+     <width>160</width>
+     <height>26</height>
     </rect>
    </property>
    <property name="text">
@@ -48,9 +48,9 @@
   <widget class="QComboBox" name="position">
    <property name="geometry">
     <rect>
-     <x>320</x>
-     <y>470</y>
-     <width>131</width>
+     <x>240</x>
+     <y>550</y>
+     <width>160</width>
      <height>40</height>
     </rect>
    </property>
@@ -81,10 +81,10 @@
   <widget class="QLabel" name="screenLabel">
    <property name="geometry">
     <rect>
-     <x>90</x>
-     <y>520</y>
-     <width>210</width>
-     <height>23</height>
+     <x>60</x>
+     <y>605</y>
+     <width>160</width>
+     <height>26</height>
     </rect>
    </property>
    <property name="text">
@@ -94,9 +94,9 @@
   <widget class="QComboBox" name="screen">
    <property name="geometry">
     <rect>
-     <x>320</x>
-     <y>515</y>
-     <width>131</width>
+     <x>240</x>
+     <y>595</y>
+     <width>80</width>
      <height>40</height>
     </rect>
    </property>
@@ -104,14 +104,14 @@
   <widget class="QLabel" name="componentsLabel">
    <property name="geometry">
     <rect>
-     <x>90</x>
+     <x>60</x>
      <y>68</y>
      <width>351</width>
      <height>23</height>
     </rect>
    </property>
    <property name="text">
-    <string>Optional features</string>
+    <string>Optional features:</string>
    </property>
   </widget>
   <widget class="QCheckBox" name="showApplicationMenu">
@@ -149,9 +149,9 @@
   <widget class="QLabel" name="headerLabel">
    <property name="geometry">
     <rect>
-     <x>90</x>
+     <x>60</x>
      <y>20</y>
-     <width>361</width>
+     <width>400</width>
      <height>23</height>
     </rect>
    </property>
@@ -163,7 +163,7 @@
    <property name="geometry">
     <rect>
      <x>120</x>
-     <y>380</y>
+     <y>460</y>
      <width>300</width>
      <height>30</height>
     </rect>
@@ -194,9 +194,9 @@
   <widget class="QLabel" name="styleLabel">
    <property name="geometry">
     <rect>
-     <x>90</x>
-     <y>440</y>
-     <width>210</width>
+     <x>60</x>
+     <y>515</y>
+     <width>160</width>
      <height>26</height>
     </rect>
    </property>
@@ -207,9 +207,9 @@
   <widget class="QComboBox" name="style">
    <property name="geometry">
     <rect>
-     <x>320</x>
-     <y>425</y>
-     <width>131</width>
+     <x>240</x>
+     <y>505</y>
+     <width>160</width>
      <height>40</height>
     </rect>
    </property>
@@ -254,7 +254,7 @@
    <property name="geometry">
     <rect>
      <x>120</x>
-     <y>260</y>
+     <y>300</y>
      <width>300</width>
      <height>30</height>
     </rect>
@@ -270,7 +270,7 @@
    <property name="geometry">
     <rect>
      <x>120</x>
-     <y>340</y>
+     <y>420</y>
      <width>300</width>
      <height>30</height>
     </rect>
@@ -286,7 +286,7 @@
    <property name="geometry">
     <rect>
      <x>120</x>
-     <y>300</y>
+     <y>260</y>
      <width>300</width>
      <height>30</height>
     </rect>
@@ -297,6 +297,81 @@
    <property name="checked">
     <bool>true</bool>
    </property>
+  </widget>
+  <widget class="QCheckBox" name="showBatteryIndicator">
+   <property name="geometry">
+    <rect>
+     <x>120</x>
+     <y>340</y>
+     <width>300</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Battery Indicator</string>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="showKeyboardLayout">
+   <property name="geometry">
+    <rect>
+     <x>120</x>
+     <y>380</y>
+     <width>300</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Keyboard Layout</string>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="visibilityLabel">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>650</y>
+     <width>160</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Visibility</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="visibility">
+   <property name="geometry">
+    <rect>
+     <x>240</x>
+     <y>640</y>
+     <width>240</width>
+     <height>40</height>
+    </rect>
+   </property>
+   <item>
+    <property name="text">
+     <string>Always Visible</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Intelligent Auto Hide</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Auto Hide</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Always On Top</string>
+    </property>
+   </item>
   </widget>
  </widget>
  <resources/>

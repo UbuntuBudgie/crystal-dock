@@ -27,50 +27,6 @@
 
 namespace crystaldock {
 
-constexpr char MultiDockModel::kGeneralCategory[];
-constexpr char MultiDockModel::kAutoHide[];
-constexpr char MultiDockModel::kPosition[];
-constexpr char MultiDockModel::kScreen[];
-constexpr char MultiDockModel::kShowApplicationMenu[];
-constexpr char MultiDockModel::kShowClock[];
-constexpr char MultiDockModel::kShowPager[];
-constexpr char MultiDockModel::kShowTaskManager[];
-constexpr char MultiDockModel::kVisibility[];
-constexpr char MultiDockModel::kPanelStyle[];
-
-constexpr char MultiDockModel::kBackgroundColor[];
-constexpr char MultiDockModel::kBackgroundColor2D[];
-constexpr char MultiDockModel::kBackgroundColorMetal2D[];
-constexpr char MultiDockModel::kBorderColor[];
-constexpr char MultiDockModel::kBorderColorMetal2D[];
-constexpr char MultiDockModel::kActiveIndicatorColor[];
-constexpr char MultiDockModel::kActiveIndicatorColor2D[];
-constexpr char MultiDockModel::kActiveIndicatorColorMetal2D[];
-constexpr char MultiDockModel::kInactiveIndicatorColor[];
-constexpr char MultiDockModel::kInactiveIndicatorColor2D[];
-constexpr char MultiDockModel::kInactiveIndicatorColorMetal2D[];
-constexpr char MultiDockModel::kMaximumIconSize[];
-constexpr char MultiDockModel::kMinimumIconSize[];
-constexpr char MultiDockModel::kSpacingFactor[];
-constexpr char MultiDockModel::kFloatingMargin[];
-constexpr char MultiDockModel::kFirstRunMultiScreen[];
-constexpr char MultiDockModel::kFirstRunWindowCountIndicator[];
-
-constexpr char MultiDockModel::kTooltipFontSize[];
-constexpr char MultiDockModel::kApplicationMenuCategory[];
-constexpr char MultiDockModel::kLabel[];
-constexpr char MultiDockModel::kFontSize[];
-constexpr char MultiDockModel::kBackgroundAlpha[];
-constexpr char MultiDockModel::kPagerCategory[];
-constexpr char MultiDockModel::kWallpaper[];
-constexpr char MultiDockModel::kShowDesktopNumber[];
-constexpr char MultiDockModel::kTaskManagerCategory[];
-constexpr char MultiDockModel::kCurrentDesktopTasksOnly[];
-constexpr char MultiDockModel::kCurrentScreenTasksOnly[];
-constexpr char MultiDockModel::kClockCategory[];
-constexpr char MultiDockModel::kUse24HourClock[];
-constexpr char MultiDockModel::kFontScaleFactor[];
-
 MultiDockModel::MultiDockModel(const QString& configDir)
     : configHelper_(configDir),
       appearanceConfig_(configHelper_.appearanceConfigPath(),
@@ -108,21 +64,24 @@ void MultiDockModel::loadDocks() {
 }
 
 void MultiDockModel::addDock(PanelPosition position, int screen,
+                             PanelVisibility visibility,
                              bool showApplicationMenu, bool showPager,
                              bool showTaskManager, bool showTrash,
-                             bool showVolumeControl, bool showWifiManager,
+                             bool showWifiManager, bool showVolumeControl,
+                             bool showBatteryIndicator, bool showKeyboardLayout,
                              bool showVersionChecker, bool showClock) {
   auto configPath = configHelper_.findNextDockConfig();
-  auto dockId = addDock(configPath, position, screen);
-  setVisibility(dockId, kDefaultVisibility);
+  auto dockId = addDock(configPath, position, screen, visibility);
   setLaunchers(dockId, defaultLaunchers());
   setShowApplicationMenu(dockId, showApplicationMenu);
   setShowPager(dockId, showPager);
   setShowTaskManager(dockId, showTaskManager);
   setShowTrash(dockId, showTrash);
-  setShowVolumeControl(dockId, showVolumeControl);
-  setShowVersionChecker(dockId, showVersionChecker);
   setShowWifiManager(dockId, showWifiManager);
+  setShowVolumeControl(dockId, showVolumeControl);
+  setShowBatteryIndicator(dockId, showBatteryIndicator);
+  setShowKeyboardLayout(dockId, showKeyboardLayout);
+  setShowVersionChecker(dockId, showVersionChecker);
   setShowClock(dockId, showClock);
   emit dockAdded(dockId);
 
@@ -148,8 +107,8 @@ void MultiDockModel::addDock(PanelPosition position, int screen,
   syncDockConfig(dockId);
 }
 
-int MultiDockModel::addDock(const QString& configPath,
-                            PanelPosition position, int screen) {
+int MultiDockModel::addDock(const QString& configPath, PanelPosition position,
+                            int screen, PanelVisibility visibility) {
   const auto dockId = nextDockId_;
   ++nextDockId_;
   dockConfigs_[dockId] = std::make_tuple(
@@ -157,6 +116,7 @@ int MultiDockModel::addDock(const QString& configPath,
       std::make_unique<QSettings>(configPath, QSettings::IniFormat));
   setPanelPosition(dockId, position);
   setScreen(dockId, screen);
+  setVisibility(dockId, visibility);
 
   return dockId;
 }
@@ -167,7 +127,7 @@ void MultiDockModel::cloneDock(int srcDockId, PanelPosition position,
 
   // Clone the dock config.
   QFile::copy(dockConfigPath(srcDockId), configPath);
-  auto dockId = addDock(configPath, position, screen);
+  auto dockId = addDock(configPath, position, screen, visibility(srcDockId));
   emit dockAdded(dockId);
 
   syncDockConfig(dockId);
