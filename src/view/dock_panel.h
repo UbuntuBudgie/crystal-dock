@@ -45,9 +45,9 @@
 #include "application_menu_settings_dialog.h"
 #include "appearance_settings_dialog.h"
 #include "dock_item.h"
+#include "edit_keyboard_layouts_dialog.h"
 #include "edit_launchers_dialog.h"
 #include "task_manager_settings_dialog.h"
-#include "trash.h"
 #include "wallpaper_settings_dialog.h"
 
 namespace crystaldock {
@@ -180,20 +180,14 @@ class DockPanel : public QWidget {
     saveDockConfig();
   }
 
-  void toggleClock() {
-    showClock_ = !showClock_;
-    reload();
-    saveDockConfig();
-  }
-
   void toggleTrash() {
     showTrash_ = !showTrash_;
     reload();
     saveDockConfig();
   }
 
-  void toggleVersionChecker() {
-    showVersionChecker_ = !showVersionChecker_;
+  void toggleWifiManager() {
+    showWifiManager_ = !showWifiManager_;
     reload();
     saveDockConfig();
   }
@@ -204,8 +198,26 @@ class DockPanel : public QWidget {
     saveDockConfig();
   }
 
-  void toggleWifiManager() {
-    showWifiManager_ = !showWifiManager_;
+  void toggleBatteryIndicator() {
+    showBatteryIndicator_ = !showBatteryIndicator_;
+    reload();
+    saveDockConfig();
+  }
+
+  void toggleKeyboardLayout() {
+    showKeyboardLayout_ = !showKeyboardLayout_;
+    reload();
+    saveDockConfig();
+  }
+
+  void toggleVersionChecker() {
+    showVersionChecker_ = !showVersionChecker_;
+    reload();
+    saveDockConfig();
+  }
+
+  void toggleClock() {
+    showClock_ = !showClock_;
     reload();
     saveDockConfig();
   }
@@ -228,6 +240,7 @@ class DockPanel : public QWidget {
   // Dock-specific settings are activated from menu items on the context menu
   // directly.
   void showAppearanceSettingsDialog();
+  void showEditKeyboardLayoutsDialog();
   void showEditLaunchersDialog();
   void showApplicationMenuSettingsDialog();
   void showWallpaperSettingsDialog(int desktop);
@@ -245,6 +258,8 @@ class DockPanel : public QWidget {
   void onWindowStateChanged(const WindowInfo* info);
   void onWindowTitleChanged(const WindowInfo* info);
   void onActiveWindowChanged();
+  void onWindowEnteredOutput(const WindowInfo*, const wl_output*);
+  void onWindowLeftOutput(const WindowInfo*, const wl_output*);
 
   void minimize() { leaveEvent(nullptr); }
 
@@ -316,8 +331,10 @@ class DockPanel : public QWidget {
   bool hasTask(void* window);
 
   void initTrash();
-  void initVolumeControl();
   void initWifiManager();
+  void initVolumeControl();
+  void initBatteryIndicator();
+  void initKeyboardLayout();
   void initVersionChecker();
   void initClock();
 
@@ -379,11 +396,13 @@ class DockPanel : public QWidget {
   PanelVisibility visibility_;
   bool showApplicationMenu_;
   bool showPager_;
-  bool showClock_;
   bool showTrash_;
-  bool showVersionChecker_;
-  bool showVolumeControl_;
   bool showWifiManager_;
+  bool showVolumeControl_;
+  bool showBatteryIndicator_;
+  bool showKeyboardLayout_;
+  bool showVersionChecker_;
+  bool showClock_;
   int minSize_;
   int maxSize_;
   float spacingFactor_;  // item spacing as ratio of minSize, in (0, 1) range.
@@ -432,14 +451,18 @@ class DockPanel : public QWidget {
   QAction* visibilityIntelligentAutoHideAction_;
   QAction* visibilityAutoHideAction_;
   QAction* visibilityAlwaysOnTopAction_;
+
   QAction* applicationMenuAction_;
   QAction* pagerAction_;
   QAction* taskManagerAction_;
-  QAction* clockAction_;
   QAction* trashAction_;
-  QAction* versionCheckerAction_;
-  QAction* volumeControlAction_;
   QAction* wifiManagerAction_;
+  QAction* volumeControlAction_;
+  QAction* batteryIndicatorAction_;
+  QAction* keyboardLayoutAction_;
+  QAction* versionCheckerAction_;
+  QAction* clockAction_;
+
   QAction* floatingStyleAction_;
   QAction* glass3DStyleAction_;
   QAction* glass2DStyleAction_;
@@ -451,6 +474,7 @@ class DockPanel : public QWidget {
   QMessageBox aboutDialog_;
   AddPanelDialog addPanelDialog_;
   AppearanceSettingsDialog appearanceSettingsDialog_;
+  EditKeyboardLayoutsDialog editKeyboardLayoutsDialog_;
   EditLaunchersDialog editLaunchersDialog_;
   ApplicationMenuSettingsDialog applicationMenuSettingsDialog_;
   WallpaperSettingsDialog wallpaperSettingsDialog_;
@@ -478,10 +502,8 @@ class DockPanel : public QWidget {
   int mouseX_;
   int mouseY_;
 
+  friend class KeyboardLayout;  // for accessing EditKeyboardLayoutDialog.
   friend class Program;  // for leaveEvent.
-  friend class DockPanelTest;
-  friend class ConfigDialogTest;
-  friend class EditLaunchersDialogTest;
 };
 
 }  // namespace crystaldock

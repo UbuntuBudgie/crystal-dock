@@ -16,40 +16,20 @@
  * along with Crystal Dock.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "wayfire_desktop_env.h"
+#ifndef CRYSTAL_DOCK_BUDGIE_DESKTOP_ENV_H_
+#define CRYSTAL_DOCK_BUDGIE_DESKTOP_ENV_H_
 
-#include <model/multi_dock_model.h>
+#include "desktop_env.h"
 
 namespace crystaldock {
 
-std::vector<Category> WayfireDesktopEnv::getApplicationMenuSystemCategories() const {
-  static const std::vector<Category> kSystemCategories = {
-    {"Session", "Session", "system-log-out",
-      {
-        {kLockScreenId,
-          "Lock Screen",
-          "",
-          "system-lock-screen",
-          "swaylock",
-          ""
-        },
-        {kLogOutId,
-          "Log Out",
-          "",
-          "system-log-out",
-          "wlogout",
-          ""
-        },
-      },
-    },
-  };
+class BudgieDesktopEnv : public DesktopEnv {
+ public:
+  std::vector<Category> getApplicationMenuSystemCategories() const override;
 
-  return kSystemCategories;
-}
-
-std::vector<QString> WayfireDesktopEnv::getDefaultLaunchers() const {
-  return { kShowDesktopId, defaultWebBrowser(), "alacritty",
-           kSeparatorId, kLockScreenId, kLogOutId, kSeparatorId };
-}
+  std::vector<QString> getDefaultLaunchers() const override;
+};
 
 }  // namespace crystaldock
+
+#endif // CRYSTAL_DOCK_BUDGIE_DESKTOP_ENV_H_

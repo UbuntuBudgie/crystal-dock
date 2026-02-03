@@ -16,13 +16,13 @@
  * along with Crystal Dock.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "wayfire_desktop_env.h"
+#include "sway_desktop_env.h"
 
 #include <model/multi_dock_model.h>
 
 namespace crystaldock {
 
-std::vector<Category> WayfireDesktopEnv::getApplicationMenuSystemCategories() const {
+std::vector<Category> SwayDesktopEnv::getApplicationMenuSystemCategories() const {
   static const std::vector<Category> kSystemCategories = {
     {"Session", "Session", "system-log-out",
       {
@@ -37,7 +37,7 @@ std::vector<Category> WayfireDesktopEnv::getApplicationMenuSystemCategories() co
           "Log Out",
           "",
           "system-log-out",
-          "wlogout",
+          "swaymsg exit",
           ""
         },
       },
@@ -47,8 +47,8 @@ std::vector<Category> WayfireDesktopEnv::getApplicationMenuSystemCategories() co
   return kSystemCategories;
 }
 
-std::vector<QString> WayfireDesktopEnv::getDefaultLaunchers() const {
-  return { kShowDesktopId, defaultWebBrowser(), "alacritty",
+std::vector<QString> SwayDesktopEnv::getDefaultLaunchers() const {
+  return { defaultWebBrowser(), "foot",
            kSeparatorId, kLockScreenId, kLogOutId, kSeparatorId };
 }
 

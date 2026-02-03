@@ -24,11 +24,13 @@ find_package(LayerShellQt 6.0 REQUIRED)
 
 set(SRCS
     desktop/desktop_env.cc
+    desktop/budgie_desktop_env.cc
     desktop/hyprland_desktop_env.cc
     desktop/kde_desktop_env.cc
     desktop/labwc_desktop_env.cc
     desktop/lxqt_desktop_env.cc
     desktop/niri_desktop_env.cc
+    desktop/sway_desktop_env.cc
     desktop/wayfire_desktop_env.cc
     display/window_system.cc
     display/kde_auto_hide_manager.cc
@@ -47,16 +49,19 @@ set(SRCS
     view/appearance_settings_dialog.cc
     view/application_menu_settings_dialog.cc
     view/application_menu.cc
+    view/battery_indicator.cc
     view/calendar.cc
     view/clock.cc
     view/color_button.cc
     view/desktop_selector.cc
     view/dock_item.cc
     view/dock_panel.cc
+    view/edit_keyboard_layouts_dialog.cc
     view/edit_launchers_dialog.cc
     view/icon_based_dock_item.cc
     view/icon_button.cc
     view/iconless_dock_item.cc
+    view/keyboard_layout.cc
     view/multi_dock_view.cc
     view/program.cc
     view/separator.cc
@@ -69,11 +74,13 @@ set(SRCS
     view/wifi_manager.cc
     utils/desktop_file.cc
     desktop/desktop_env.h
+    desktop/budgie_desktop_env.h
     desktop/hyprland_desktop_env.h
     desktop/kde_desktop_env.h
     desktop/labwc_desktop_env.h
     desktop/lxqt_desktop_env.h
     desktop/niri_desktop_env.h
+    desktop/sway_desktop_env.h
     desktop/wayfire_desktop_env.h
     display/window_system.h
     display/kde_auto_hide_manager.h
@@ -93,16 +100,19 @@ set(SRCS
     view/appearance_settings_dialog.h
     view/application_menu_settings_dialog.h
     view/application_menu.h
+    view/battery_indicator.h
     view/calendar.h
     view/clock.h
     view/color_button.h
     view/desktop_selector.h
     view/dock_item.h
     view/dock_panel.h
+    view/edit_keyboard_layouts_dialog.h
     view/edit_launchers_dialog.h
     view/icon_based_dock_item.h
     view/icon_button.h
     view/iconless_dock_item.h
+    view/keyboard_layout.h
     view/multi_dock_view.h
     view/program.h
     view/separator.h
@@ -123,6 +133,7 @@ set(SRCS
     view/add_panel_dialog.ui
     view/appearance_settings_dialog.ui
     view/application_menu_settings_dialog.ui
+    view/edit_keyboard_layouts_dialog.ui
     view/edit_launchers_dialog.ui
     view/task_manager_settings_dialog.ui
     view/wallpaper_settings_dialog.ui

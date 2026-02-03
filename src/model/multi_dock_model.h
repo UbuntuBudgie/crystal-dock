@@ -80,11 +80,13 @@ constexpr bool kDefaultAutoHide = false;
 constexpr bool kDefaultShowApplicationMenu = true;
 constexpr bool kDefaultShowPager = false;
 constexpr bool kDefaultShowTaskManager = true;
-constexpr bool kDefaultShowClock = true;
 constexpr bool kDefaultShowTrash = true;
-constexpr bool kDefaultShowVersionChecker = true;
-constexpr bool kDefaultShowVolumeControl = true;
 constexpr bool kDefaultShowWifiManager = true;
+constexpr bool kDefaultShowVolumeControl = true;
+constexpr bool kDefaultShowBatteryIndicator = false;
+constexpr bool kDefaultShowKeyboardLayout = true;
+constexpr bool kDefaultShowVersionChecker = true;
+constexpr bool kDefaultShowClock = true;
 constexpr int kDefaultVolumeScrollStep = 2;
 constexpr PanelStyle kDefaultPanelStyle = PanelStyle::Glass3D_Floating;
 
@@ -94,7 +96,7 @@ constexpr int kDefaultApplicationMenuFontSize = 14;
 constexpr float kDefaultApplicationMenuBackgroundAlpha = 0.8;
 constexpr bool kDefaultShowDesktopNumber = true;
 constexpr bool kDefaultCurrentDesktopTasksOnly = false;
-constexpr bool kDefaultCurrentScreenTasksOnly = false;
+constexpr bool kDefaultCurrentScreenTasksOnly = true;
 constexpr bool kDefaultGroupTasksByApplication = true;
 constexpr bool kDefaultUse24HourClock = true;
 constexpr float kDefaultClockFontScaleFactor = kLargeClockFontScaleFactor;
@@ -122,17 +124,12 @@ class MultiDockModel : public QObject {
   int dockCount() const { return dockConfigs_.size(); }
 
   // Adds a new dock in the specified position and screen.
-  void addDock(PanelPosition position, int screen, bool showApplicationMenu,
-               bool showPager, bool showTaskManager, bool showTrash,
-               bool showVolumeControl, bool showWifiManager,
+  void addDock(PanelPosition position, int screen, PanelVisibility visibility,
+               bool showApplicationMenu, bool showPager,
+               bool showTaskManager, bool showTrash,
+               bool showWifiManager, bool showVolumeControl,
+               bool showBatteryIndicator, bool showKeyboardLayout,
                bool showVersionChecker, bool showClock);
-
-  void addDock() {
-    addDock(PanelPosition::Bottom, 0, kDefaultShowApplicationMenu,
-            kDefaultShowPager, kDefaultShowTaskManager, kDefaultShowTrash,
-            kDefaultShowVolumeControl, kDefaultShowWifiManager,
-            kDefaultShowVersionChecker, kDefaultShowClock);
-  }
 
   // Clones an existing dock in the specified position and screen.
   void cloneDock(int srcDockId, PanelPosition position, int screen);
@@ -577,15 +574,6 @@ class MultiDockModel : public QObject {
     setDockProperty(dockId, kGeneralCategory, kShowTaskManager, value);
   }
 
-  bool showClock(int dockId) const {
-    return dockProperty(dockId, kGeneralCategory, kShowClock,
-                        kDefaultShowClock);
-  }
-
-  void setShowClock(int dockId, bool value) {
-    setDockProperty(dockId, kGeneralCategory, kShowClock, value);
-  }
-
   bool showTrash(int dockId) const {
     return dockProperty(dockId, kGeneralCategory, kShowTrash,
                         kDefaultShowTrash);
@@ -593,24 +581,6 @@ class MultiDockModel : public QObject {
 
   void setShowTrash(int dockId, bool value) {
     setDockProperty(dockId, kGeneralCategory, kShowTrash, value);
-  }
-
-  bool showVersionChecker(int dockId) const {
-    return dockProperty(dockId, kGeneralCategory, kShowVersionChecker,
-                        kDefaultShowVersionChecker);
-  }
-
-  void setShowVersionChecker(int dockId, bool value) {
-    setDockProperty(dockId, kGeneralCategory, kShowVersionChecker, value);
-  }
-
-  bool showVolumeControl(int dockId) const {
-    return dockProperty(dockId, kGeneralCategory, kShowVolumeControl,
-                        kDefaultShowVolumeControl);
-  }
-
-  void setShowVolumeControl(int dockId, bool value) {
-    setDockProperty(dockId, kGeneralCategory, kShowVolumeControl, value);
   }
 
   bool showWifiManager(int dockId) const {
@@ -622,6 +592,51 @@ class MultiDockModel : public QObject {
     setDockProperty(dockId, kGeneralCategory, kShowWifiManager, value);
   }
 
+  bool showVolumeControl(int dockId) const {
+    return dockProperty(dockId, kGeneralCategory, kShowVolumeControl,
+                        kDefaultShowVolumeControl);
+  }
+
+  void setShowVolumeControl(int dockId, bool value) {
+    setDockProperty(dockId, kGeneralCategory, kShowVolumeControl, value);
+  }
+
+  bool showBatteryIndicator(int dockId) const {
+    return dockProperty(dockId, kGeneralCategory, kShowBatteryIndicator,
+                        kDefaultShowBatteryIndicator);
+  }
+
+  void setShowBatteryIndicator(int dockId, bool value) {
+    setDockProperty(dockId, kGeneralCategory, kShowBatteryIndicator, value);
+  }
+
+  bool showKeyboardLayout(int dockId) const {
+    return dockProperty(dockId, kGeneralCategory, kShowKeyboardLayout,
+                        kDefaultShowKeyboardLayout);
+  }
+
+  void setShowKeyboardLayout(int dockId, bool value) {
+    setDockProperty(dockId, kGeneralCategory, kShowKeyboardLayout, value);
+  }
+
+  bool showVersionChecker(int dockId) const {
+    return dockProperty(dockId, kGeneralCategory, kShowVersionChecker,
+                        kDefaultShowVersionChecker);
+  }
+
+  void setShowVersionChecker(int dockId, bool value) {
+    setDockProperty(dockId, kGeneralCategory, kShowVersionChecker, value);
+  }
+
+  bool showClock(int dockId) const {
+    return dockProperty(dockId, kGeneralCategory, kShowClock,
+                        kDefaultShowClock);
+  }
+
+  void setShowClock(int dockId, bool value) {
+    setDockProperty(dockId, kGeneralCategory, kShowClock, value);
+  }
+
   int volumeScrollStep() const {
     return appearanceProperty(kVolumeControlCategory, kVolumeScrollStep,
                               kDefaultVolumeScrollStep);
@@ -629,6 +644,23 @@ class MultiDockModel : public QObject {
 
   void setVolumeScrollStep(int value) {
     setAppearanceProperty(kVolumeControlCategory, kVolumeScrollStep, value);
+  }
+
+  QString activeKeyboardLayout() const {
+    return appearanceProperty(kKeyboardLayoutCategory, kActiveKeyboardLayout, QString());
+  }
+
+  void setActiveKeyboardLayout(QString value) {
+    return setAppearanceProperty(kKeyboardLayoutCategory, kActiveKeyboardLayout, value);
+  }
+
+  QStringList userKeyboardLayouts() const {
+    return appearanceProperty(kKeyboardLayoutCategory, kUserKeyboardLayouts, QString())
+        .split(";", Qt::SkipEmptyParts);
+  }
+
+  void setUserKeyboardLayouts(QStringList value) {
+    return setAppearanceProperty(kKeyboardLayoutCategory, kUserKeyboardLayouts, value.join(";"));
   }
 
   QStringList launchers(int dockId) const {
@@ -712,13 +744,15 @@ class MultiDockModel : public QObject {
   static constexpr char kPosition[] = "position";
   static constexpr char kScreen[] = "screen";
   static constexpr char kShowApplicationMenu[] = "showApplicationMenu";
-  static constexpr char kShowClock[] = "showClock";
   static constexpr char kShowPager[] = "showPager";
   static constexpr char kShowTaskManager[] = "showTaskManager";
   static constexpr char kShowTrash[] = "showTrash";
-  static constexpr char kShowVersionChecker[] = "showVersionChecker";
-  static constexpr char kShowVolumeControl[] = "showVolumeControl";
   static constexpr char kShowWifiManager[] = "showWifiManager";
+  static constexpr char kShowVolumeControl[] = "showVolumeControl";
+  static constexpr char kShowBatteryIndicator[] = "showBatteryIndicator";
+  static constexpr char kShowKeyboardLayout[] = "showKeyboardLayout";
+  static constexpr char kShowVersionChecker[] = "showVersionChecker";
+  static constexpr char kShowClock[] = "showClock";
   static constexpr char kLaunchers[] = "launchers";
 
   // Global appearance config's categories/properties.
@@ -763,13 +797,19 @@ class MultiDockModel : public QObject {
   static constexpr char kCurrentScreenTasksOnly[] = "currentScreenTasksOnly";
   static constexpr char kGroupTasksByApplication[] = "groupTasksByApplication";
 
+  static constexpr char kVolumeControlCategory[] = "VolumeControl";
+  static constexpr char kVolumeScrollStep[] = "volumeScrollStep";
+
+  static constexpr char kKeyboardLayoutCategory[] = "KeyboardLayout";
+  // The active keyboard layout (the engine name).
+  static constexpr char kActiveKeyboardLayout[] = "activeKeyboardLayout";
+  // The list of user-selected keyboard layouts (the engine names) for fast switching.
+  static constexpr char kUserKeyboardLayouts[] = "userKeyboardLayouts";
+
   static constexpr char kClockCategory[] = "Clock";
   static constexpr char kUse24HourClock[] = "use24HourClock";
   static constexpr char kFontScaleFactor[] = "fontScaleFactor";
   static constexpr char kClockFontFamily[] = "clockFontFamily";
-
-  static constexpr char kVolumeControlCategory[] = "VolumeControl";
-  static constexpr char kVolumeScrollStep[] = "volumeScrollStep";
 
   template <typename T>
   T appearanceProperty(QString category, QString name, T defaultValue) const {
@@ -826,7 +866,8 @@ class MultiDockModel : public QObject {
 
   void loadDocks();
 
-  int addDock(const QString& configPath, PanelPosition position, int screen);
+  int addDock(const QString& configPath, PanelPosition position, int screen,
+              PanelVisibility visibility);
 
   void syncAppearanceConfig() {
     appearanceConfig_.sync();
