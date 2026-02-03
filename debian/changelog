@@ -1,5 +1,5 @@
-crystal-dock (2.15-1) unstable; urgency=medium
+crystal-dock (2.15-0ubuntu1) resolute; urgency=medium
 
-  * Initial release (Closes: #1116315).
+  * Initial release (LP: #2138336).
 
  -- David Mohammed <fossfreedom@ubuntu.com>  Wed, 03 Dec 2025 22:58:20 +0000
